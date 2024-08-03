@@ -35,6 +35,8 @@ from .utils import BondDevice
 _LOGGER = logging.getLogger(__name__)
 
 PRESET_MODE_BREEZE = "Breeze"
+PRESET_NONE = "None"
+
 
 
 async def async_setup_entry(
@@ -68,7 +70,7 @@ class BondFan(BondEntity, FanEntity):
         self._direction: int | None = None
         super().__init__(data, device)
         if self._device.has_action(Action.BREEZE_ON):
-            self._attr_preset_modes = [PRESET_MODE_BREEZE]
+            self._attr_preset_modes = [PRESET_MODE_BREEZE, PRESET_NONE]
         features = FanEntityFeature.TURN_OFF | FanEntityFeature.TURN_ON
         if self._device.supports_speed():
             features |= FanEntityFeature.SET_SPEED
@@ -84,7 +86,7 @@ class BondFan(BondEntity, FanEntity):
         self._speed = state.get("speed")
         self._direction = state.get("direction")
         breeze = state.get("breeze", [0, 0, 0])
-        self._attr_preset_mode = PRESET_MODE_BREEZE if breeze[0] else None
+        self._attr_preset_mode = PRESET_MODE_BREEZE if breeze[0] else PRESET_NONE
 
     @property
     def _speed_range(self) -> tuple[int, int]:
@@ -190,7 +192,9 @@ class BondFan(BondEntity, FanEntity):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset mode of the fan."""
-        await self._bond.action(self._device_id, Action(Action.BREEZE_ON))
+        if self.preset_mode == PRESET_NONE:
+            await self._bond.action(self._device_id, Action(Action.BREEZE_ON))
+        else await self._bond.action(self._device_id, Action(Action.BREEZE_OFF))
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the fan off."""
@@ -204,3 +208,4 @@ class BondFan(BondEntity, FanEntity):
             Direction.REVERSE if direction == DIRECTION_REVERSE else Direction.FORWARD
         )
         await self._bond.action(self._device_id, Action.set_direction(bond_direction))
+    
