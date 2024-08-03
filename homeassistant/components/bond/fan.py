@@ -38,7 +38,6 @@ PRESET_MODE_BREEZE = "Breeze"
 PRESET_NONE = "None"
 
 
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: BondConfigEntry,
